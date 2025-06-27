@@ -3,8 +3,8 @@ import path from 'path'
 
 //middleware
 import loggerMiddleware from './middleware/loggerMiddleware.js';
-import notFound from './middleware/notFoundMiddleware.js';
-import errorMiddleware from './middleware/errorMiddleware.js';
+import notFound from './middleware/error/notFoundMiddleware.js';
+import errorMiddleware from './middleware/error/errorMiddleware.js';
 
 //routes
 import files from './routes/files.js'

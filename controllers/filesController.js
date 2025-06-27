@@ -1,6 +1,9 @@
+import createFileSchema from "../validators/files/createFileSchema.js"
+import updateFileShema from "../validators/files/updateFileShema.js"
 
 let files = []
 
+//! get files
 export const getFiles = (req, res, next) => {
     console.log('from get files: ', files)
     const id = req.params.id
@@ -27,67 +30,85 @@ export const getFiles = (req, res, next) => {
     }
 }
 
+
+//! create new file
 export const createFile = (req, res, next) => {
-    const body = req.body
-    if (!req.file) {
-        const err = new Error("file is required!");
-        err.status = 400
-        return next(err)
+    const body = {
+        ...req.body,
+        filename: req.file?.filename,
+        path: req.file?.path,
     }
-    if (!body || Object.keys(body).length === 0) {
-        const err = new Error(`the data of the files are needed`)
-        err.status = 400
+
+    const { error } = createFileSchema.validate(body, { abortEarly: false })
+    if (error) {
+        console.log('error :: ', error)
+        const err = new Error(error.details.map(d => d.message).join(', '))
+        err.status = 400;
+        console.log('err :: ', err)
         return next(err)
     }
 
     const newFile = {
         id: files.length + 1,
-        filename: req.file.filename,
-        path: `/uploads/${req.file.filename}`,
-        des: body.des
+        ...body
+        // filename: req.file.filename,
+        // path: `/uploads/${req.file.filename}`,
+        // des: body.des,
+        // createdBy: body.createdBy
     }
 
     try {
         files.push(newFile);
         console.log('from post file, files:', files)
-        
+
         res.status(201).json(newFile)
     } catch (error) {
         return next(error)
     }
 }
 
+
+//! update targeted file
 export const updateFile = (req, res, next) => {
-    const body = req.body
-    if (!body || Object.keys(body).length === 0) {
-        const err = new Error(`the data of the files are needed`)
-        err.status = 400
+    const id = +req.params.id || +req.body.id;
+    const body = {
+        ...req.body,
+        filename: req.file?.filename,
+        path: req.file?.path,
+        id: isNaN(id) ? undefined : id,
+    }
+
+    const { error } = updateFileShema.validate(body, { abortEarly: false , convert: true})
+    if (error) {
+        console.log('error :: ', error)
+        const err = new Error(error.details.map(d => d.message).join(', '))
+        err.status = 400;
+        console.log('err :: ', err)
         return next(err)
     }
 
-    const id = req.params.id || body.id;
-    if (!id || isNaN(+id)) {
-        const err = new Error(`file's id is required`)
-        err.status = 400
-        return next(err)
-    }
 
-    const targetFile = files.find(file => +file.id === +id || null)
+    const targetFile = files.find(file => +file.id === id || null)
     if (!targetFile) {
         const err = new Error(`file not found!`)
         err.status = 404
         return next(err)
     }
+
+    //file not uploaded(user do not want to change the existed file)
+    if (!body.filename) {
+        body['filename'] = targetFile.filename
+        body['path'] = targetFile.path
+    }
+
     console.log('targetFile', targetFile);
     const newElement = {
-        id: id,
-        filename: req.file ? req.file.filename : targetFile.filename,
-        path: req.file ? `/uploads/${req.file.filename}` : targetFile.path,
-        des: body.des,
+        ...targetFile,
+        ...body,
     }
 
     try {
-        files = files.filter(file => +file.id === +id ? newElement : file)
+        files = files.filter(file => +file.id === id ? newElement : file)
         res.status(201).json(newElement);
         console.log('files', files)
     } catch (error) {
@@ -95,6 +116,8 @@ export const updateFile = (req, res, next) => {
     }
 }
 
+
+//! delete targeted file
 export const deleteFile = (req, res, next) => {
     const id = req.params.id;
     console.log('id', id)
@@ -118,6 +141,9 @@ export const deleteFile = (req, res, next) => {
     }
 }
 
+
+
+//todo: use this delete when the db is ready. as it checks on the file from the db and the file system too
 // export const deleteFile = (req, res, next) => {
 //     const targetFile = req.targetFile
 //     if(!targetFile){
