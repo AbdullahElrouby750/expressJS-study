@@ -12,8 +12,6 @@ router.post('/', uploadFilMiddleware ,createFile);
 
 router.put('/{:id}', uploadFilMiddleware ,updateFile);
 
-router.delete('/:id',deleteFile);
-
-// router.delete('/:id', deleteFileMiddleware, deleteFile);
+router.delete('/:id', deleteFileMiddleware, deleteFile);
 
 export default router

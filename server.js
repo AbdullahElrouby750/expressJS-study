@@ -9,6 +9,9 @@ import errorMiddleware from './middleware/error/errorMiddleware.js';
 //routes
 import files from './routes/files.js'
 
+//mongoDB
+import connectDB from './db.js';
+
 
 const port = process.env.PORT || 3000
 
@@ -31,6 +34,6 @@ app.use('/api/files', files)
 app.use(notFound)
 app.use(errorMiddleware)
 
-
+connectDB();
 
 app.listen(port, () => console.log(`app is running on http://localhost:3000/`))

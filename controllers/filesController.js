@@ -1,30 +1,37 @@
+import File from '../models/files/File.js'
+
 import createFileSchema from "../validators/files/createFileSchema.js"
 import updateFileShema from "../validators/files/updateFileShema.js"
 
-let files = []
+// let files = []
 
 //! get files
-export const getFiles = (req, res, next) => {
-    console.log('from get files: ', files)
+export const getFiles = async (req, res, next) => {
     const id = req.params.id
     console.log('id', id)
-    let targetFile = null;
-    if (id && isNaN(+id)) {
-        const err = new Error("Invalid id!");
-        err.status = 400
-        return next(err);
-    }
+    // let targetFile = null;
+    // if (id && isNaN(+id)) {
+    //     const err = new Error("Invalid id!");
+    //     err.status = 400
+    //     return next(err);
+    // }
 
     try {
         if (id) {
-            targetFile = files.find(file => +file.id === +id || null)
+            // targetFile = files.find(file => +file.id === +id || null)
+            const targetFile = await File.findById(id);
+            console.log('targetFile', targetFile)
             if (!targetFile) {
                 const err = new Error(`file not found!`)
                 err.status = 404
                 return next(err)
             }
+            res.status(200).json(targetFile);
+        } else {
+            const files = await File.find();
+            console.log('files', files)
+            res.status(200).json(files);
         }
-        res.status(200).json(id ? targetFile : files);
     } catch (error) {
         return next(error)
     }
@@ -32,7 +39,7 @@ export const getFiles = (req, res, next) => {
 
 
 //! create new file
-export const createFile = (req, res, next) => {
+export const createFile = async (req, res, next) => {
     const body = {
         ...req.body,
         filename: req.file?.filename,
@@ -49,19 +56,15 @@ export const createFile = (req, res, next) => {
     }
 
     const newFile = {
-        id: files.length + 1,
         ...body
-        // filename: req.file.filename,
-        // path: `/uploads/${req.file.filename}`,
-        // des: body.des,
-        // createdBy: body.createdBy
     }
 
     try {
-        files.push(newFile);
-        console.log('from post file, files:', files)
+        // files.push(newFile);
+        const result = await File.insertOne(newFile)
+        console.log('from post file:', result)
 
-        res.status(201).json(newFile)
+        res.status(201).json(result)
     } catch (error) {
         return next(error)
     }
@@ -69,16 +72,16 @@ export const createFile = (req, res, next) => {
 
 
 //! update targeted file
-export const updateFile = (req, res, next) => {
-    const id = +req.params.id || +req.body.id;
+export const updateFile = async (req, res, next) => {
+    const id = req.params.id || req.body.id;
     const body = {
         ...req.body,
         filename: req.file?.filename,
         path: req.file?.path,
-        id: isNaN(id) ? undefined : id,
+        id: id,
     }
 
-    const { error } = updateFileShema.validate(body, { abortEarly: false , convert: true})
+    const { error } = updateFileShema.validate(body, { abortEarly: false, convert: true })
     if (error) {
         console.log('error :: ', error)
         const err = new Error(error.details.map(d => d.message).join(', '))
@@ -87,30 +90,21 @@ export const updateFile = (req, res, next) => {
         return next(err)
     }
 
-
-    const targetFile = files.find(file => +file.id === id || null)
-    if (!targetFile) {
-        const err = new Error(`file not found!`)
-        err.status = 404
-        return next(err)
-    }
-
-    //file not uploaded(user do not want to change the existed file)
-    if (!body.filename) {
-        body['filename'] = targetFile.filename
-        body['path'] = targetFile.path
-    }
-
-    console.log('targetFile', targetFile);
-    const newElement = {
-        ...targetFile,
-        ...body,
-    }
-
     try {
-        files = files.filter(file => +file.id === id ? newElement : file)
-        res.status(201).json(newElement);
-        console.log('files', files)
+        
+        // if (!body.filename) {
+        //     body['filename'] = targetFile.filename
+        //     body['path'] = targetFile.path
+        // }
+        const targetFile = await File.findOneAndUpdate({ _id: id }, body, { returnDocument: 'after' })
+        if (!targetFile) {
+            const err = new Error(`file not found!`)
+            err.status = 404
+            return next(err)
+        }
+
+        console.log('targetFile from update:: ', targetFile);
+        res.status(201).json(targetFile);
     } catch (error) {
         return next(error)
     }
@@ -118,43 +112,17 @@ export const updateFile = (req, res, next) => {
 
 
 //! delete targeted file
-export const deleteFile = (req, res, next) => {
-    const id = req.params.id;
-    console.log('id', id)
-    if (!id || isNaN(+id)) {
-        const err = new Error(`file's id is required`)
-        err.status = 400
+//todo: use this delete when the db is ready. as it checks on the file from the db and the file system too
+export const deleteFile = async (req, res, next) => {
+    const targetFile = req.targetFile
+    if(!targetFile){
+        const err = new Error(`Internal server error!`)
+        err.status = 500
         return next(err)
     }
-
     try {
-        const targetFile = files.find(file => +file.id === +id || null)
-        if (!targetFile) {
-            const err = new Error(`file not found!`)
-            err.status = 404
-            return next(err)
-        }
-        files = files.filter(file => +file.id !== +id)
-        res.status(200).json({ message: 'file deleted successfully' })
+    res.status(200).json({ message: 'file deleted successfully' })
     } catch (error) {
         return next(error)
     }
 }
-
-
-
-//todo: use this delete when the db is ready. as it checks on the file from the db and the file system too
-// export const deleteFile = (req, res, next) => {
-//     const targetFile = req.targetFile
-//     if(!targetFile){
-//         const err = new Error(`Internal server error!`)
-//         err.status = 500
-//         return next(err)
-//     }
-//     try {
-//     // await req.fileDoc.deleteOne();
-//     res.status(200).json({ message: 'file deleted successfully' })
-//     } catch (error) {
-//         return next(error)
-//     }
-// }
