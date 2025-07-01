@@ -2,6 +2,7 @@ import File from '../models/files/File.js'
 
 import createFileSchema from "../validators/files/createFileSchema.js"
 import updateFileShema from "../validators/files/updateFileShema.js"
+import createNewError from '../utils/createNewError.js'
 
 // let files = []
 
@@ -21,11 +22,7 @@ export const getFiles = async (req, res, next) => {
             // targetFile = files.find(file => +file.id === +id || null)
             const targetFile = await File.findById(id);
             console.log('targetFile', targetFile)
-            if (!targetFile) {
-                const err = new Error(`file not found!`)
-                err.status = 404
-                return next(err)
-            }
+            if (!targetFile) return next(createNewError(404, 'file not found!'))
             res.status(200).json(targetFile);
         } else {
             const files = await File.find();
@@ -47,14 +44,7 @@ export const createFile = async (req, res, next) => {
     }
 
     const { error } = createFileSchema.validate(body, { abortEarly: false })
-    if (error) {
-        console.log('error :: ', error)
-        const err = new Error(error.details.map(d => d.message).join(', '))
-        err.status = 400;
-        console.log('err :: ', err)
-        return next(err)
-    }
-
+    if (error) return next(createNewError(400, error.details.map(d => d.message).join(', ')))
     const newFile = {
         ...body
     }
@@ -82,27 +72,11 @@ export const updateFile = async (req, res, next) => {
     }
 
     const { error } = updateFileShema.validate(body, { abortEarly: false, convert: true })
-    if (error) {
-        console.log('error :: ', error)
-        const err = new Error(error.details.map(d => d.message).join(', '))
-        err.status = 400;
-        console.log('err :: ', err)
-        return next(err)
-    }
+    if (error) return next(createNewError(400, error.details.map(d => d.message).join(', ')))
 
     try {
-        
-        // if (!body.filename) {
-        //     body['filename'] = targetFile.filename
-        //     body['path'] = targetFile.path
-        // }
         const targetFile = await File.findOneAndUpdate({ _id: id }, body, { returnDocument: 'after' })
-        if (!targetFile) {
-            const err = new Error(`file not found!`)
-            err.status = 404
-            return next(err)
-        }
-
+        if (!targetFile)  return next(createNewError(404, 'file not found!'))
         console.log('targetFile from update:: ', targetFile);
         res.status(201).json(targetFile);
     } catch (error) {
@@ -115,11 +89,7 @@ export const updateFile = async (req, res, next) => {
 //todo: use this delete when the db is ready. as it checks on the file from the db and the file system too
 export const deleteFile = async (req, res, next) => {
     const targetFile = req.targetFile
-    if(!targetFile){
-        const err = new Error(`Internal server error!`)
-        err.status = 500
-        return next(err)
-    }
+    if(!targetFile) return next(createNewError())
     try {
     res.status(200).json({ message: 'file deleted successfully' })
     } catch (error) {
