@@ -1,13 +1,13 @@
 import Joi from "joi";
 
 const signupSchema = Joi.object({
-    email: Joi.email().required(),
-    password: Joi.string().required(),
+    email: Joi.string().email().required(),
+    password: Joi.string().pattern(RegExp('^(?=.*[A-Z])(?=.*[^a-zA-Z0-9]).{8,}$')).required(),
 
     userName:  Joi.string().required(),
     userRole:  Joi.string().required(),
     phone:  Joi.string().required(),
-    joinDate: Joi.date().required(),
+    joinDate: Joi.date().optional(),
 
     age: Joi.number().optional(),
 

@@ -10,16 +10,9 @@ import createNewError from '../utils/createNewError.js'
 export const getFiles = async (req, res, next) => {
     const id = req.params.id
     console.log('id', id)
-    // let targetFile = null;
-    // if (id && isNaN(+id)) {
-    //     const err = new Error("Invalid id!");
-    //     err.status = 400
-    //     return next(err);
-    // }
 
     try {
         if (id) {
-            // targetFile = files.find(file => +file.id === +id || null)
             const targetFile = await File.findById(id);
             console.log('targetFile', targetFile)
             if (!targetFile) return next(createNewError(404, 'file not found!'))

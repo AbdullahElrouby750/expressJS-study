@@ -1,8 +1,8 @@
 import Joi from "joi";
 
 const signupSchema = Joi.object({
-    email: Joi.email().optional(),
-    password: Joi.string().optional(),
+    email: Joi.string().email().optional(),
+    password: Joi.string().pattern(RegExp('^(?=.*[A-Z])(?=.*[^a-zA-Z0-9]).{8,}$')).optional(),
     userName: Joi.string().optional(),
     userRole: Joi.string().optional(),
     phone: Joi.string().optional(),

@@ -7,9 +7,9 @@ const userSchema = new mongoose.Schema({
     userName: { type: String, required: true },
     userRole: { type: String, required: true },
     phone:{type:String, required:true},
-    joinDate:{type:Date, required:true},
+    joinDate:{type:Date, default: null},
 
-    age:{type:Number},
+    age:{type:Number, default:null},
 });
 
 export default mongoose.model("User", userSchema);

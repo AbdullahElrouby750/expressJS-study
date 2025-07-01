@@ -8,6 +8,7 @@ import errorMiddleware from './middleware/error/errorMiddleware.js';
 
 //routes
 import files from './routes/files.js'
+import account from './routes/account.js'
 
 //mongoDB
 import connectDB from './db.js';
@@ -27,7 +28,11 @@ app.use(express.static(path.join(import.meta.dirname,'public')))
 app.use(loggerMiddleware)
 
 //routes
-app.use('/api/files', files)
+//!files
+app.use('/api/files', files);
+
+//!account
+app.use('/api/account', account);
 
 
 //error handler
