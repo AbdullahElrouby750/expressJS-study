@@ -56,7 +56,12 @@ export async function login(req, res, next) {
             { expiresIn: '1h' }
         );
 
-        res.status(200).json({ token });
+        res.cookie('token', token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            maxAge: 60 * 60 * 1000
+        }).json({message:'logged in successfully'})
     } catch (error) {
         return next(error)
     }
