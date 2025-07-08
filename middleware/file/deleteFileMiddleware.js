@@ -11,10 +11,11 @@ export default async function deleteFileMiddleware(req, res, next) {
     try {
 
         if(id){
-            const targeFile = await File.findOneAndDelete({_id:id})
-            if (!targeFile) return next(createNewError(404, 'file not found!'))
-            await unlinkAsync(targeFile.path)
-            req.targeFile = targeFile
+            const targetFile = await File.findOneAndDelete({_id:id});
+            console.log('targetFile::', targetFile);
+            if (!targetFile) return next(createNewError(404, 'file not found!'))
+            await unlinkAsync(targetFile.path)
+            req.targetFile = targetFile
             next()
         }
     } catch (error) {
